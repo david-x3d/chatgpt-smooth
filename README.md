@@ -4,132 +4,132 @@
 
 # Claude Smooth
 
-**Weiche, federnde Animationen für claude.ai – ohne das Aussehen zu verändern.**
+**Soft, springy animations for claude.ai – without changing how it looks.**
 
 [![Release](https://img.shields.io/github/v/release/david-x3d/claude-smooth?label=Release&color=d97757)](https://github.com/david-x3d/claude-smooth/releases/latest)
 [![Firefox](https://img.shields.io/badge/Firefox-142%2B-FF7139?logo=firefoxbrowser&logoColor=white)](#firefox--floorp--zen--librewolf)
 [![Chromium](https://img.shields.io/badge/Chromium-117%2B-4285F4?logo=googlechrome&logoColor=white)](#chrome--edge--brave--vivaldi--helium)
-[![Lizenz](https://img.shields.io/github/license/david-x3d/claude-smooth?label=Lizenz)](LICENSE)
+[![License](https://img.shields.io/github/license/david-x3d/claude-smooth?label=License)](LICENSE)
 
-<img src="docs/demo.svg" width="720" alt="Eine Nachricht hebt ab, die Antwort blendet Zeile für Zeile ein, die Sidebar gleitet raus und wieder rein">
+<img src="docs/demo.svg" width="720" alt="A message lifts off, the reply fades in line by line, the sidebar slides out and back in">
 
 </div>
 
-claude.ai springt an vielen Stellen: Antworten erscheinen in Brocken, Menüs ploppen auf, die Sidebar klappt in einem einzigen Frame zu. Claude Smooth legt eine Bewegungsschicht darüber – mit echter Federphysik statt starrer Übergänge. Farben, Schriften und Layout bleiben genau so, wie sie sind.
+claude.ai jumps in a lot of places: replies arrive in chunks, menus pop open, the sidebar collapses in a single frame. Claude Smooth adds a layer of motion on top – with real spring physics instead of rigid transitions. Colors, fonts and layout stay exactly as they are.
 
-## Was sich ändert
+## What changes
 
-| | Ohne | Mit Claude Smooth |
+| | Without | With Claude Smooth |
 |---|---|---|
-| **Antworten** | Text erscheint in Brocken, die Seite springt Zeile für Zeile | Wörter blenden nacheinander ein und werden scharf, neue Zeilen gleiten nach oben |
-| **Nachrichten** | tauchen einfach auf | deine Nachricht hebt vom Eingabefeld ab, Claudes Antwort steigt auf |
-| **Menüs & Dialoge** | ploppen auf | wachsen aus ihrem Button heraus, Einträge kaskadieren, beim Schließen schrumpfen sie zurück |
-| **Seitenwechsel** | harter Schnitt | neuer Inhalt gleitet herein, was bleibt, bleibt stehen |
-| **Sidebar** | springt zu | gleitet raus, der Chat fährt im selben Tempo hinterher |
-| **Klicks** | – | Buttons federn beim Drücken, Icons verwandeln sich (Kopieren → Haken) |
-| **Maus** | – | ein weiches Licht folgt dem Zeiger über Buttons, Puls beim Klick |
+| **Replies** | Text arrives in chunks, the page jumps line by line | Words fade in one after another and come into focus, new lines glide up |
+| **Messages** | Just appear | Your message lifts off the input box, Claude's reply rises in |
+| **Menus & dialogs** | Pop open | Grow out of their button, items cascade in, shrink back when closing |
+| **Page changes** | Hard cut | New content glides in, whatever stays stays put |
+| **Sidebar** | Snaps shut | Slides out, the chat follows at the same pace |
+| **Clicks** | – | Buttons give a little when pressed, icons morph (copy → checkmark) |
+| **Pointer** | – | A soft light follows the cursor over buttons, a pulse on click |
 
-Alles lässt sich einzeln abschalten, das Tempo ist einstellbar. Ist im System „Bewegung reduzieren“ aktiv, bleibt claude.ai unverändert.
+Every effect can be switched off on its own, and the speed is adjustable. If your system has "reduce motion" turned on, claude.ai stays untouched.
 
 ## Installation
 
-Die Dateien liegen beim [neuesten Release](https://github.com/david-x3d/claude-smooth/releases/latest).
+All files are attached to the [latest release](https://github.com/david-x3d/claude-smooth/releases/latest).
 
 ### Firefox · Floorp · Zen · LibreWolf
 
-1. `claude-smooth-…-firefox.xpi` herunterladen.
-2. `about:addons` öffnen → Zahnrad → **Add-on aus Datei installieren…** und die Datei wählen (oder sie einfach ins Browserfenster ziehen).
+1. Download `claude-smooth-…-firefox.xpi`.
+2. Open `about:addons` → gear icon → **Install Add-on From File…** and pick the file (or just drag it onto the browser window).
 
-Die Datei ist von Mozilla signiert: dauerhaft installiert, kein Entwicklermodus, Updates kommen automatisch.
+The file is signed by Mozilla: installed permanently, no developer mode, updates arrive automatically.
 
 ### Chrome · Edge · Brave · Vivaldi · Helium
 
-Chromium-Browser installieren Erweiterungen von außerhalb des Chrome Web Store nur, wenn eine Browser-Richtlinie es erlaubt. Unter **Linux** richtet das ein kleines Skript ein:
+Chromium browsers only install extensions from outside the Chrome Web Store when a browser policy allows it. On **Linux** a small script sets that up:
 
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/david-x3d/claude-smooth/main/install/chromium-linux.sh
 sudo bash chromium-linux.sh
 ```
 
-Danach den Browser neu starten. Das Skript erkennt Chrome, Chromium, Helium, Brave, Edge und Vivaldi. Der Browser lädt die signierte Erweiterung selbst aus den Releases und hält sie aktuell – kein Entwicklermodus. Er zeigt dann „Von deiner Organisation verwaltet“; das bezieht sich nur auf diese eine Regel.
+Then restart the browser. The script detects Chrome, Chromium, Helium, Brave, Edge and Vivaldi. The browser downloads the signed extension from the releases by itself and keeps it up to date – no developer mode. It will say "Managed by your organization"; that only refers to this one policy.
 
-Wieder entfernen: `sudo bash chromium-linux.sh --uninstall`
+To remove it again: `sudo bash chromium-linux.sh --uninstall`
 
 <details>
-<summary><b>Windows, macOS oder ohne Root-Rechte</b></summary>
+<summary><b>Windows, macOS or without root access</b></summary>
 
-Dort lassen Chrome & Co. Erweiterungen von außerhalb des Web Store nur im Entwicklermodus zu:
+There, Chrome and friends only allow extensions from outside the Web Store in developer mode:
 
-1. `claude-smooth-…-chromium.zip` herunterladen und entpacken.
-2. `chrome://extensions` öffnen (Edge: `edge://extensions`) und den **Entwicklermodus** einschalten.
-3. **Entpackt laden** → den entpackten Ordner wählen.
+1. Download `claude-smooth-…-chromium.zip` and unzip it.
+2. Open `chrome://extensions` (Edge: `edge://extensions`) and turn on **Developer mode**.
+3. Click **Load unpacked** and select the unzipped folder.
 
-Updates gibt es auf diesem Weg nicht automatisch – für eine neue Version den Ordner ersetzen und auf ⟳ klicken.
+This way there are no automatic updates – for a new version, replace the folder and click ⟳.
 
 </details>
 
-## Einstellungen
+## Settings
 
-Ein Klick auf das Symbol in der Symbolleiste öffnet die Einstellungen. Sie gelten sofort, ohne Neuladen.
+Click the toolbar icon to open the settings (the popup is in German). Changes apply instantly, no reload needed.
 
-| Schalter | Wirkung | Standard |
+| Switch (in the popup) | Effect | Default |
 |---|---|:---:|
-| Text-Streaming | Wörter blenden ein, Text gleitet beim Mitscrollen | an |
-| Menüs & Dialoge | Weich auf- und zuklappen | an |
-| Seiten & Nachrichten | Einstellungen, Chats, neue Nachrichten | an |
-| Sidebar & Layout | Ein-/Ausklappen gleitet statt springt | an |
-| Alles einblenden | Jedes neue Element blendet weich ein | an |
-| Weichzeichnen | Blur-Fokus beim Einblenden (braucht etwas GPU) | an |
-| Klick-Federung | Alles gibt beim Drücken nach, Icons verwandeln sich | an |
-| Glanz & Licht-Puls | Licht folgt der Maus, Puls beim Klick | an |
-| Hover-Übergänge | Farben, Pfeile, Schalter | an |
-| Weiches Scrollen | Programmatisches Scrollen wird weich (kann beim Mitscrollen nachziehen) | aus |
-| **Tempo** | von schnell (0,5×) bis sanft (1,8×) | 1× |
+| Text-Streaming | Words fade in, text glides while the reply scrolls along | on |
+| Menüs & Dialoge | Menus and dialogs open and close softly | on |
+| Seiten & Nachrichten | Settings, chats, new messages | on |
+| Sidebar & Layout | Collapsing and expanding glides instead of jumping | on |
+| Alles einblenden | Every new element fades in softly | on |
+| Weichzeichnen | Blur-to-focus when things appear (uses a bit of GPU) | on |
+| Klick-Federung | Everything gives when pressed, icons morph | on |
+| Glanz & Licht-Puls | Light follows the pointer, pulse on click | on |
+| Hover-Übergänge | Colors, arrows, switches | on |
+| Weiches Scrollen | Smooth programmatic scrolling (can lag behind while following a reply) | off |
+| **Tempo** | From fast (0.5×) to gentle (1.8×) | 1× |
 
-## Wie es funktioniert
+## How it works
 
-- **Echte Federn.** Die Bewegungen sind gedämpfte Federn wie in SwiftUI (`smooth`, `snappy`, `bouncy`). Sie werden einmal berechnet und als CSS-`linear()`-Kurven abgelegt – mit natürlichem Nachschwingen statt starrer Bézier-Kurven.
-- **Vor dem ersten Bild.** Neue Inhalte werden im `MutationObserver` erkannt, bevor der Browser sie zeichnet. Nichts blitzt erst auf und springt dann zurück.
-- **Das Streaming bleibt unangetastet.** Das Wort-für-Wort-Einblenden nutzt die [CSS Custom Highlight API](https://developer.mozilla.org/docs/Web/API/CSS_Custom_Highlight_API) – claude.ais Text wird nicht umgebaut, Kopieren und Markieren funktionieren wie immer.
-- **Günstige Eigenschaften.** Bewegt werden fast nur `translate`, `scale` und `opacity`; Weichzeichner nur auf kleinen Flächen.
+- **Real springs.** The motion comes from damped springs like SwiftUI's (`smooth`, `snappy`, `bouncy`). They are computed once and stored as CSS `linear()` curves – natural overshoot instead of rigid Bézier curves.
+- **Before the first frame.** New content is picked up in a `MutationObserver` before the browser paints it. Nothing flashes in and then jumps back.
+- **Streaming stays untouched.** The word-by-word fade uses the [CSS Custom Highlight API](https://developer.mozilla.org/docs/Web/API/CSS_Custom_Highlight_API) – claude.ai's text is never rewritten, so copying and selecting work as always.
+- **Cheap properties.** Almost everything moves via `translate`, `scale` and `opacity`; blur is only used on small areas.
 
-## Datenschutz
+## Privacy
 
-Claude Smooth sendet nichts und sammelt nichts – keine Telemetrie, keine Netzwerkanfragen. Die Erweiterung läuft ausschließlich auf `claude.ai` und braucht nur eine Berechtigung: `storage`, für deine Einstellungen, lokal im Browser. Updates lädt der Browser selbst aus den GitHub-Releases.
+Claude Smooth sends nothing and collects nothing – no telemetry, no network requests. It runs only on `claude.ai` and needs a single permission: `storage`, for your settings, kept locally in the browser. Updates are fetched by the browser itself from the GitHub releases.
 
-## Entwicklung
+## Development
 
 ```
-manifest.json          Firefox-Manifest – der Ordner lässt sich direkt laden
-smooth.js, smooth.css  die Erweiterung
-popup.html, popup.js   Einstellungen
-scripts/build.mjs      baut dist/firefox und dist/chromium (+ ZIPs)
-install/               Linux-Installer für Chromium-Browser
+manifest.json          Firefox manifest – the folder can be loaded as is
+smooth.js, smooth.css  the extension
+popup.html, popup.js   settings popup
+scripts/build.mjs      builds dist/firefox and dist/chromium (+ zips)
+install/               Linux installer for Chromium browsers
 ```
 
-- **Ausprobieren in Firefox:** `about:debugging#/runtime/this-firefox` → *Temporäres Add-on laden…* → `manifest.json`
-- **Ausprobieren in Chromium:** `node scripts/build.mjs`, dann `dist/chromium` entpackt laden
-- **Prüfen:** `npx web-ext lint --self-hosted --source-dir dist/firefox`
+- **Try it in Firefox:** `about:debugging#/runtime/this-firefox` → *Load Temporary Add-on…* → `manifest.json`
+- **Try it in Chromium:** `node scripts/build.mjs`, then load `dist/chromium` unpacked
+- **Lint:** `npx web-ext lint --self-hosted --source-dir dist/firefox`
 
-Gebaut wird ohne Abhängigkeiten – nur Node ≥ 18 und `zip`.
+The build has no dependencies – just Node ≥ 18 and `zip`.
 
-### Neue Version veröffentlichen
+### Publishing a new version
 
-1. Version in `manifest.json` erhöhen und `CHANGELOG.md` ergänzen.
-2. Taggen und pushen: `git tag v3.2.0 && git push origin main --tags`
-3. GitHub Actions baut, signiert beide Varianten und veröffentlicht das Release samt Update-Dateien.
+1. Bump the version in `manifest.json` and add an entry to `CHANGELOG.md`.
+2. Tag and push: `git tag v3.2.0 && git push origin main --tags`
+3. GitHub Actions builds, signs both variants and publishes the release including the update files.
 
-Zum Signieren braucht das Repository drei Secrets:
+Signing needs three repository secrets:
 
-| Secret | Wofür | Woher |
+| Secret | Used for | Where to get it |
 |---|---|---|
-| `AMO_JWT_ISSUER`, `AMO_JWT_SECRET` | Firefox-Signatur (unlisted) | [addons.mozilla.org → API-Schlüssel](https://addons.mozilla.org/developers/addon/api/key/) |
-| `CRX_PRIVATE_KEY` | Chromium-Signatur, feste Erweiterungs-ID | eigener RSA-Schlüssel (PEM) |
+| `AMO_JWT_ISSUER`, `AMO_JWT_SECRET` | Firefox signature (unlisted) | [addons.mozilla.org → API keys](https://addons.mozilla.org/developers/addon/api/key/) |
+| `CRX_PRIVATE_KEY` | Chromium signature, fixed extension ID | your own RSA key (PEM) |
 
-## Hinweis
+## Disclaimer
 
-Inoffizielles Community-Projekt, nicht mit Anthropic verbunden. „Claude“ ist eine Marke von Anthropic.
+Unofficial community project, not affiliated with Anthropic. "Claude" is a trademark of Anthropic.
 
-## Lizenz
+## License
 
 [MIT](LICENSE)

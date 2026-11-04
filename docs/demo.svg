@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="800" height="360" role="img" aria-label="Animation: eine Nachricht hebt ab, die Antwort blendet Zeile für Zeile ein, die Sidebar gleitet raus und wieder rein">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="800" height="360" role="img" aria-label="Animation: a message lifts off, the reply fades in line by line, the sidebar slides out and back in">
   <style>
     .sb, .ch, .pill, .bub, .ln { animation-duration: 8s; animation-iteration-count: infinite; animation-fill-mode: both;
       animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }

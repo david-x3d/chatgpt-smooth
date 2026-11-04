@@ -42,7 +42,7 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
           if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME passt nicht zu manifest.json ($version)"
+            echo "::error::Tag $GITHUB_REF_NAME does not match manifest.json ($version)"
             exit 1
           fi
 
@@ -97,15 +97,15 @@ jobs:
 
           ---
 
-          **Installieren** – Anleitung im [README](https://github.com/${GITHUB_REPOSITORY}#installation).
+          **Install** – step-by-step guide in the [README](https://github.com/${GITHUB_REPOSITORY}#installation).
 
-          | Datei | Für |
+          | File | For |
           |---|---|
-          | \`claude-smooth-$version-firefox.xpi\` | Firefox, Floorp, Zen, LibreWolf … (von Mozilla signiert, dauerhaft installierbar) |
-          | \`claude-smooth-$version-chromium.crx\` | Chrome, Edge, Brave, Vivaldi, Helium … (signiert, für die Richtlinien-Installation) |
-          | \`claude-smooth-$version-chromium.zip\` | Chromium-Browser im Entwicklermodus („Entpackt laden“) |
-          | \`claude-smooth-$version-firefox.zip\` | Firefox: unsigniert, nur für \`about:debugging\` |
-          | \`updates.json\` / \`updates.xml\` | Automatische Updates (werden von den Browsern selbst abgerufen) |
+          | \`claude-smooth-$version-firefox.xpi\` | Firefox, Floorp, Zen, LibreWolf … (signed by Mozilla, installs permanently) |
+          | \`claude-smooth-$version-chromium.crx\` | Chrome, Edge, Brave, Vivaldi, Helium … (signed, used by the policy install) |
+          | \`claude-smooth-$version-chromium.zip\` | Chromium browsers in developer mode ("Load unpacked") |
+          | \`claude-smooth-$version-firefox.zip\` | Firefox, unsigned – only for \`about:debugging\` |
+          | \`updates.json\` / \`updates.xml\` | Automatic updates (fetched by the browsers themselves) |
           EOF
 
           gh release create "$tag" "${files[@]}" \

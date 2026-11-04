@@ -1,28 +1,28 @@
-name: Fehler melden
-description: Etwas ruckelt, springt oder sieht falsch aus
+name: Bug report
+description: Something stutters, jumps or looks wrong
 labels: [bug]
 body:
   - type: textarea
     id: what
     attributes:
-      label: Was passiert?
-      description: Wo auf claude.ai, und was genau sieht komisch aus? Ein kurzes Video hilft am meisten.
+      label: What happens?
+      description: Where on claude.ai, and what exactly looks off? A short screen recording helps the most.
     validations:
       required: true
   - type: input
     id: browser
     attributes:
-      label: Browser und Version
-      placeholder: z. B. Firefox 154, Floorp 12.17, Chrome 142
+      label: Browser and version
+      placeholder: e.g. Firefox 154, Floorp 12.17, Chrome 142
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: Claude Smooth Version
-      placeholder: z. B. 3.1.1
+      label: Claude Smooth version
+      placeholder: e.g. 3.1.1
   - type: textarea
     id: settings
     attributes:
-      label: Geänderte Einstellungen
-      description: Hast du im Popup etwas umgestellt (Tempo, Schalter)?
+      label: Changed settings
+      description: Did you change anything in the popup (speed, switches)?

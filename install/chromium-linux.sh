@@ -28,7 +28,7 @@ BROWSERS=(
 )
 
 if [[ $EUID -ne 0 ]]; then
-  echo "Bitte mit sudo ausführen:  sudo bash $0 ${1:-}" >&2
+  echo "Please run with sudo:  sudo bash $0 ${1:-}" >&2
   exit 1
 fi
 
@@ -47,10 +47,10 @@ if [[ "${1:-}" == "--uninstall" ]]; then
     IFS="|" read -r name _ dir <<<"$entry"
     if [[ -f "$dir/$FILE" ]]; then
       rm -f "$dir/$FILE"
-      echo "✓ $name: entfernt"
+      echo "✓ $name: removed"
     fi
   done
-  echo "Fertig. Browser neu starten."
+  echo "Done. Restart the browser."
   exit 0
 fi
 
@@ -73,7 +73,7 @@ for entry in "${BROWSERS[@]}"; do
   any=1
   # another policy file that also sets ExtensionSettings would win over this one
   if [[ -d "$dir" ]] && grep -l '"ExtensionSettings"' "$dir"/*.json 2>/dev/null | grep -v "/$FILE$" >/dev/null; then
-    echo "! $name: $dir enthält schon ExtensionSettings – bitte dort von Hand ergänzen:" >&2
+    echo "! $name: $dir already sets ExtensionSettings – please add this there by hand:" >&2
     echo "$POLICY" >&2
     continue
   fi
@@ -84,11 +84,11 @@ for entry in "${BROWSERS[@]}"; do
 done
 
 if [[ $any -eq 0 ]]; then
-  echo "Kein unterstützter Chromium-Browser gefunden." >&2
+  echo "No supported Chromium browser found." >&2
   exit 1
 fi
 
 echo
-echo "Fertig. Browser neu starten – Claude Smooth wird automatisch installiert"
-echo "und hält sich über GitHub-Releases selbst aktuell."
-echo "Prüfen: chrome://policy (Richtlinien neu laden) und chrome://extensions"
+echo "Done. Restart the browser – Claude Smooth gets installed automatically"
+echo "and keeps itself up to date from the GitHub releases."
+echo "Check: chrome://policy (reload policies) and chrome://extensions"
