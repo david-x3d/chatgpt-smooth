@@ -2,6 +2,11 @@
 
 All notable changes to Claude Smooth.
 
+## [3.1.2] – 2026-11-04
+
+### Changed
+- The settings popup and the extension description are now in English.
+
 ## [3.1.1] – 2026-11-04
 
 ### New

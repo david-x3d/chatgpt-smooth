@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Claude Smooth",
-  "version": "3.1.1",
-  "description": "Weichere Animationen auf claude.ai – ohne das Aussehen zu verändern.",
+  "version": "3.1.2",
+  "description": "Smoother animations on claude.ai, without changing the look.",
   "homepage_url": "https://github.com/david-x3d/claude-smooth",
   "icons": { "48": "icons/icon.svg", "96": "icons/icon.svg" },
   "permissions": ["storage"],
