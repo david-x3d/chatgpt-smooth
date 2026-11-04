@@ -1,0 +1,12 @@
+# build output
+dist/
+web-ext-artifacts/
+node_modules/
+.amo-upload-uuid
+
+# signing keys and signed packages never go into the repo
+*.pem
+*.crx
+*.xpi
+
+.DS_Store

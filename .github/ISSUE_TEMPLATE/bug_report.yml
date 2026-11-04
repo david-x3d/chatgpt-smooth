@@ -1,0 +1,28 @@
+name: Fehler melden
+description: Etwas ruckelt, springt oder sieht falsch aus
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Was passiert?
+      description: Wo auf claude.ai, und was genau sieht komisch aus? Ein kurzes Video hilft am meisten.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser und Version
+      placeholder: z. B. Firefox 154, Floorp 12.17, Chrome 142
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Claude Smooth Version
+      placeholder: z. B. 3.1.1
+  - type: textarea
+    id: settings
+    attributes:
+      label: Geänderte Einstellungen
+      description: Hast du im Popup etwas umgestellt (Tempo, Schalter)?

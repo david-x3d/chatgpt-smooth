@@ -1,0 +1,314 @@
+/*
+ * Claude Smooth — Apple-style motion for claude.ai
+ *
+ * Springs: smooth.js computes real damped-spring curves (SwiftUI-style
+ * .smooth / .snappy / .bouncy) and writes them as CSS linear() easings into
+ * --cs-spring-* with matching durations in --cs-d-*. The values below are
+ * fallbacks until the script has run.
+ *
+ * Most rules use :where() (zero specificity) so claude.ai's own styling wins
+ * where it exists. Animations use the individual `scale` / `translate` / `filter`
+ * properties so they never clobber an element's own `transform`.
+ */
+
+:root {
+  --cs-k: 1;
+  --cs-b: 1; /* blur on/off */
+  --cs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --cs-ease-in: cubic-bezier(0.4, 0, 0.9, 0.6);
+  --cs-spring-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --cs-spring-snappy: cubic-bezier(0.3, 1.25, 0.5, 1);
+  --cs-spring-bouncy: cubic-bezier(0.34, 1.5, 0.64, 1);
+  --cs-d-smooth: 500ms;
+  --cs-d-snappy: 420ms;
+  --cs-d-bouncy: 600ms;
+  --cs-spring-layout: cubic-bezier(0.22, 1, 0.36, 1);
+  --cs-d-layout: 450ms;
+  --cs-d-fade: calc(220ms * var(--cs-k));
+}
+html:not(.cs-blur) { --cs-b: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+
+  /* ── 0. Opacity changes glide; images focus in from a blur ──
+     (new content fading in is done by smooth.js on the outermost new element
+     only: a CSS fade on every element would multiply and make content pop late) */
+  :where(html.cs-appear) :where(body *):not(:where(
+      svg *, .ProseMirror *, [contenteditable] *, .font-claude-response *,
+      .font-claude-message *, [data-is-streaming] *,
+      .cs-out *, .cs-out-fade *, .cs-pop *, .cs-fade *, .cs-dialog *,
+      .dframe-sidebar-body
+  )) {
+    transition-property: opacity;
+    transition-duration: calc(260ms * var(--cs-k));
+    transition-timing-function: var(--cs-ease);
+  }
+  :where(html.cs-appear) :where(img, video, canvas) {
+    transition: opacity calc(400ms * var(--cs-k)) var(--cs-ease),
+      filter calc(600ms * var(--cs-k)) var(--cs-ease),
+      scale var(--cs-d-smooth) var(--cs-spring-smooth);
+  }
+  @starting-style {
+    :where(html.cs-appear) :where(body) :where(img, video, canvas) {
+      opacity: 0;
+      filter: blur(calc(var(--cs-b) * 14px));
+      scale: 1.03;
+    }
+  }
+
+  /* ── 1. Sidebar & panels glide (only where claude.ai has no transition of its own) ── */
+  :where(html.cs-layout) :where(nav, aside, [role="navigation"], [role="complementary"]) {
+    transition-property: width, min-width, max-width, flex-basis, translate, transform;
+    transition-duration: var(--cs-d-layout);
+    transition-timing-function: var(--cs-spring-layout);
+  }
+  /* claude.ai's sidebar: the page's offset glides instead of jumping (claude.ai
+     registers --df-sidebar-clearance as a <length>, so it can transition).
+     Never while the sidebar is being dragged wider or narrower. */
+  html.cs-layout .dframe-root:not([data-resizing]):not([data-experiment]):not([data-phone-sheet]) .dframe-content-inner {
+    transition: --df-sidebar-clearance var(--cs-d-layout) var(--cs-spring-layout);
+  }
+
+  /* ── 2. Controls: colours glide, presses squish and spring back ── */
+  :where(html.cs-hover) :where(
+    button, a, summary, select, input, textarea, label,
+    [role="button"], [role="menuitem"], [role="menuitemradio"],
+    [role="menuitemcheckbox"], [role="option"], [role="tab"],
+    [role="switch"], [role="checkbox"], [data-state]
+  ) {
+    transition:
+      color calc(200ms * var(--cs-k)) var(--cs-ease),
+      background-color calc(200ms * var(--cs-k)) var(--cs-ease),
+      border-color calc(200ms * var(--cs-k)) var(--cs-ease),
+      outline-color calc(200ms * var(--cs-k)) var(--cs-ease),
+      text-decoration-color calc(200ms * var(--cs-k)) var(--cs-ease),
+      fill calc(200ms * var(--cs-k)) var(--cs-ease),
+      stroke calc(200ms * var(--cs-k)) var(--cs-ease),
+      opacity calc(200ms * var(--cs-k)) var(--cs-ease),
+      box-shadow calc(260ms * var(--cs-k)) var(--cs-ease),
+      scale var(--cs-d-bouncy) var(--cs-spring-bouncy);
+  }
+  /* (press squish + spring release is driven by smooth.js, sized per element) */
+
+  /* Chevrons and icons that rotate or flip: overshoot a little */
+  :where(html.cs-hover) :where(button, [role="button"], [data-state], summary) :where(svg) {
+    transition: transform var(--cs-d-bouncy) var(--cs-spring-bouncy),
+      rotate var(--cs-d-bouncy) var(--cs-spring-bouncy),
+      scale var(--cs-d-bouncy) var(--cs-spring-bouncy),
+      opacity calc(200ms * var(--cs-k));
+  }
+
+  /* Toggle switches: the knob springs across */
+  :where(html.cs-hover) :where([role="switch"]) :where(*) {
+    transition: transform var(--cs-d-bouncy) var(--cs-spring-bouncy),
+      translate var(--cs-d-bouncy) var(--cs-spring-bouncy),
+      background-color calc(200ms * var(--cs-k)) var(--cs-ease);
+  }
+
+  /* ── 3. Menus, popovers, tooltips: bloom out of their anchor ── */
+  html.cs-popups .cs-pop {
+    animation:
+      cs-bloom var(--cs-d-snappy) var(--cs-spring-snappy) both,
+      cs-focus-in-soft calc(220ms * var(--cs-k)) var(--cs-ease) both !important;
+    transform-origin: var(--radix-popper-transform-origin, top center);
+  }
+  /* claude.ai's own open animation on the menu inside would play on top of ours */
+  html.cs-popups .cs-pop > [data-state="open"] {
+    animation: none !important;
+  }
+  /* a closing copy must not replay any open animation of its contents */
+  html.cs-popups :is(.cs-out, .cs-out-fade) * {
+    animation: none !important;
+    transition: none !important;
+  }
+  html.cs-popups .cs-fade {
+    animation: cs-fade-in calc(280ms * var(--cs-k)) var(--cs-ease) both !important;
+  }
+  /* Dialogs rise and settle */
+  html.cs-popups .cs-dialog {
+    animation:
+      cs-rise var(--cs-d-snappy) var(--cs-spring-snappy) both,
+      cs-focus-in-soft calc(260ms * var(--cs-k)) var(--cs-ease) both !important;
+  }
+  /* Closing: shrink back into the anchor, blur away */
+  html.cs-popups .cs-out {
+    animation: cs-shrink-out calc(200ms * var(--cs-k)) var(--cs-ease-in) both !important;
+    transform-origin: var(--radix-popper-transform-origin, top center);
+    pointer-events: none !important;
+  }
+  html.cs-popups .cs-out-fade {
+    animation: cs-sink-out calc(230ms * var(--cs-k)) var(--cs-ease-in) both !important;
+    pointer-events: none !important;
+  }
+
+  /* ── 4. Streaming: words focus in via ::highlight (smooth.js); blocks drift up ── */
+  html.cs-stream .cs-in {
+    animation: cs-drift-in var(--cs-d-smooth) var(--cs-spring-smooth) both,
+      cs-focus-in calc(320ms * var(--cs-k)) var(--cs-ease) both;
+  }
+  html.cs-stream .cs-in-soft {
+    animation: cs-drift var(--cs-d-smooth) var(--cs-spring-smooth) both;
+  }
+
+  /* ── 5. New pages glide in; sent messages lift off, answers rise in ── */
+  html.cs-pages .cs-page {
+    animation: cs-page-in var(--cs-d-smooth) var(--cs-spring-smooth) both,
+      cs-fade-in calc(260ms * var(--cs-k)) var(--cs-ease) both;
+  }
+  html.cs-pages .cs-msg {
+    transform-origin: var(--cs-ox, 100%) 100%;
+    animation: cs-send var(--cs-d-send) var(--cs-spring-send) both,
+      cs-focus-in-soft calc(260ms * var(--cs-k)) var(--cs-ease) both;
+  }
+  html.cs-pages .cs-turn {
+    animation: cs-drift-in var(--cs-d-smooth) var(--cs-spring-smooth) both,
+      cs-fade-in calc(320ms * var(--cs-k)) var(--cs-ease) both;
+  }
+
+  /* Promote animating layers to the GPU compositor for full refresh rate */
+  :is(.cs-pop, .cs-fade, .cs-dialog, .cs-out, .cs-out-fade, .cs-msg, .cs-in, .cs-in-soft) {
+    will-change: opacity, scale, translate;
+    backface-visibility: hidden;
+  }
+  :is(.cs-pop, .cs-dialog, .cs-out, .cs-out-fade, .cs-msg, .cs-in) {
+    will-change: opacity, scale, translate, filter;
+  }
+
+  /* Menu entries cascade in, starting next to the button */
+  html.cs-popups .cs-item {
+    animation: cs-item-in var(--cs-d-smooth) var(--cs-spring-smooth) both;
+    animation-delay: calc(var(--cs-i, 0) * 12ms * var(--cs-k));
+  }
+
+  /* Behind an open dialog the page recedes a little (iOS sheet style).
+     No blur here: blurring the whole app every frame drops frames. */
+  html.cs-popups .cs-recede-host {
+    transition: scale var(--cs-d-smooth) var(--cs-spring-smooth);
+    transform-origin: 50% 35%;
+  }
+  html.cs-popups .cs-recede-host.cs-recede {
+    scale: 0.985;
+  }
+
+  /* ── 7. Clicks: icon swaps morph like SF Symbols ── */
+  html.cs-press .cs-symbol-in {
+    animation: cs-symbol-in var(--cs-d-bouncy) var(--cs-spring-bouncy) both,
+      cs-focus-in calc(240ms * var(--cs-k)) var(--cs-ease) both;
+  }
+  html.cs-press .cs-symbol-out {
+    animation: cs-symbol-out calc(200ms * var(--cs-k)) var(--cs-ease-in) both;
+  }
+
+  /* ── 6. Optional: smooth programmatic scrolling ── */
+  html.cs-scroll,
+  html.cs-scroll :where(*) {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Motion (spring-driven: these may overshoot, which is the point) */
+/* --cs-dx / --cs-dy: set by smooth.js so a menu grows out of its button */
+@keyframes cs-bloom {
+  from { scale: 0.9; translate: var(--cs-dx, 0px) var(--cs-dy, -6px); }
+  to   { scale: 1; translate: 0 0; }
+}
+@keyframes cs-rise {
+  from { scale: 0.94; translate: 0 16px; }
+  to   { scale: 1; translate: 0 0; }
+}
+@keyframes cs-send {
+  from { scale: 0.94; translate: 0 26px; }
+  to   { scale: 1; translate: 0 0; }
+}
+@keyframes cs-page-in {
+  from { translate: 0 10px; }
+  to   { translate: 0 0; }
+}
+@keyframes cs-drift-in {
+  from { translate: 0 10px; }
+  to   { translate: 0 0; }
+}
+@keyframes cs-drift {
+  from { translate: 0 6px; }
+  to   { translate: 0 0; }
+}
+
+/* Opacity + focus (eased, never overshoot) */
+@keyframes cs-focus-in {
+  from { opacity: 0; filter: blur(calc(var(--cs-b) * 10px)); }
+  to   { opacity: 1; filter: blur(0); }
+}
+@keyframes cs-focus-in-soft {
+  from { opacity: 0; filter: blur(calc(var(--cs-b) * 5px)); }
+  to   { opacity: 1; filter: blur(0); }
+}
+@keyframes cs-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Exits */
+@keyframes cs-shrink-out {
+  from { opacity: 1; scale: 1; filter: blur(0); }
+  to   { opacity: 0; scale: 0.9; filter: blur(calc(var(--cs-b) * 6px)); }
+}
+@keyframes cs-sink-out {
+  from { opacity: 1; scale: 1; translate: 0 0; filter: blur(0); }
+  to   { opacity: 0; scale: 0.94; translate: 0 12px; filter: blur(calc(var(--cs-b) * 8px)); }
+}
+
+@keyframes cs-item-in {
+  from { opacity: 0; translate: calc(var(--cs-dx, 0px) * 0.6) calc(var(--cs-dy, -6px) * 0.6); }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes cs-symbol-in {
+  from { scale: 0.3; }
+  to   { scale: 1; }
+}
+@keyframes cs-symbol-out {
+  from { opacity: 1; scale: 1; filter: blur(0); }
+  to   { opacity: 0; scale: 0.3; filter: blur(calc(var(--cs-b) * 4px)); }
+}
+
+/* Copy of the sidebar sliding out (lives outside <body>): a still picture,
+   none of its contents may animate on their own */
+.cs-side-ghost,
+.cs-side-ghost * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ── Sheen & click pulse (layer lives outside <body>, positioned by smooth.js) ── */
+.cs-sheen {
+  position: fixed;
+  z-index: 2147483646;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  contain: layout paint style;
+  transition: opacity calc(240ms * var(--cs-k, 1)) cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, scale;
+}
+html.cs-glow .cs-sheen.cs-on { opacity: 1; }
+.cs-sheen-spot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--cs-sheen-color, currentColor), transparent);
+  opacity: 0.1;
+  will-change: translate;
+  /* trails the pointer a hair behind: feels weighty, never laggy */
+  transition: translate calc(110ms * var(--cs-k, 1)) cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cs-pulse {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--cs-sheen-color, currentColor) 0%,
+    color-mix(in srgb, var(--cs-sheen-color, currentColor) 45%, transparent) 55%, transparent 72%);
+  pointer-events: none;
+  will-change: scale, opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs-sheen { display: none; }
+}

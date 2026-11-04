@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax
+        run: |
+          for f in smooth.js popup.js scripts/*.mjs; do node --check "$f"; done
+          bash -n install/chromium-linux.sh
+
+      - name: Build
+        run: node scripts/build.mjs
+
+      - name: Lint Firefox build
+        run: npx --yes web-ext@10 lint --self-hosted --source-dir dist/firefox
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: claude-smooth-builds
+          path: dist/*.zip

@@ -1,0 +1,112 @@
+name: Release
+
+# Runs when a version tag (v1.2.3) is pushed. Can also be started by hand
+# ("Run workflow", pick the tag) to sign again, e.g. after adding the
+# addons.mozilla.org secrets – the files of the existing release are replaced.
+#
+# Repository secrets:
+#   AMO_JWT_ISSUER / AMO_JWT_SECRET   addons.mozilla.org API key → signed .xpi
+#   CRX_PRIVATE_KEY                   PEM key → signed .crx (stable extension ID)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  release:
+    name: Build, sign & publish
+    runs-on: ubuntu-latest
+    env:
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+      CRX_PRIVATE_KEY: ${{ secrets.CRX_PRIVATE_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Read version
+        id: v
+        run: |
+          version=$(node -p "require('./manifest.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME passt nicht zu manifest.json ($version)"
+            exit 1
+          fi
+
+      - name: Build
+        run: node scripts/build.mjs
+
+      - name: Lint Firefox build
+        run: npx --yes web-ext@10 lint --self-hosted --source-dir dist/firefox
+
+      - name: Sign for Firefox (addons.mozilla.org, unlisted)
+        if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
+        run: |
+          npx --yes web-ext@10 sign --channel unlisted \
+            --source-dir dist/firefox --artifacts-dir dist/amo \
+            --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET" \
+            --approval-timeout 1800000
+          mv dist/amo/*.xpi "dist/claude-smooth-${{ steps.v.outputs.version }}-firefox.xpi"
+
+      - name: Sign for Chromium (CRX3)
+        if: env.CRX_PRIVATE_KEY != ''
+        run: |
+          key="$RUNNER_TEMP/crx-key.pem"
+          (umask 077 && printf '%s\n' "$CRX_PRIVATE_KEY" > "$key")
+          npx --yes crx3@1 -p "$key" -o "dist/claude-smooth-${{ steps.v.outputs.version }}-chromium.crx" dist/chromium
+          rm -f "$key"
+
+      - name: Update manifests
+        run: node scripts/update-manifests.mjs
+
+      - name: Checksums
+        working-directory: dist
+        run: |
+          shopt -s nullglob
+          sha256sum *.zip *.xpi *.crx > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publish release
+        run: |
+          shopt -s nullglob
+          tag="${{ steps.v.outputs.tag }}"
+          version="${{ steps.v.outputs.version }}"
+          files=(dist/*.xpi dist/*.crx dist/*.zip dist/updates.json dist/updates.xml dist/SHA256SUMS.txt)
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${files[@]}" --clobber
+            exit 0
+          fi
+
+          notes="$RUNNER_TEMP/notes.md"
+          awk -v v="$version" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > "$notes"
+          cat >> "$notes" <<EOF
+
+          ---
+
+          **Installieren** – Anleitung im [README](https://github.com/${GITHUB_REPOSITORY}#installation).
+
+          | Datei | Für |
+          |---|---|
+          | \`claude-smooth-$version-firefox.xpi\` | Firefox, Floorp, Zen, LibreWolf … (von Mozilla signiert, dauerhaft installierbar) |
+          | \`claude-smooth-$version-chromium.crx\` | Chrome, Edge, Brave, Vivaldi, Helium … (signiert, für die Richtlinien-Installation) |
+          | \`claude-smooth-$version-chromium.zip\` | Chromium-Browser im Entwicklermodus („Entpackt laden“) |
+          | \`claude-smooth-$version-firefox.zip\` | Firefox: unsigniert, nur für \`about:debugging\` |
+          | \`updates.json\` / \`updates.xml\` | Automatische Updates (werden von den Browsern selbst abgerufen) |
+          EOF
+
+          gh release create "$tag" "${files[@]}" \
+            --title "Claude Smooth $tag" --notes-file "$notes" --target "$GITHUB_SHA"
