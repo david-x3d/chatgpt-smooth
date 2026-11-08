@@ -4,7 +4,15 @@ import { test } from 'node:test';
 import { JSDOM } from 'jsdom';
 
 const source = readFileSync(new URL('../smooth.js', import.meta.url), 'utf8');
-const flush = () => new Promise(resolve => setTimeout(resolve, 70));
+const frameClocks = new Set();
+async function flush() {
+  // Flush mutation delivery and chained rebuild/paint frames explicitly. Fixed
+  // wall-clock delays can expire before a loaded CI runner paints a highlight.
+  for (let tick = 0; tick < 4; tick++) {
+    await new Promise(resolve => setImmediate(resolve));
+    for (const advance of frameClocks) advance();
+  }
+}
 
 async function page(t, { reduced = false, path = '/', effects = { appear: false, press: false, glow: false } } = {}) {
   const dom = new JSDOM('<main><section id="messages"></section><textarea id="prompt-textarea"></textarea></main>', {
@@ -25,10 +33,24 @@ async function page(t, { reduced = false, path = '/', effects = { appear: false,
   w.addEventListener('error', event => errors.push(event.error));
   t.after(() => {
     for (const observer of observers) observer.disconnect();
+    frameClocks.delete(advanceFrames);
     dom.window.close();
     assert.deepEqual(errors, [], 'content script raised no runtime errors');
   });
   let now = 0;
+  let frameId = 0;
+  const pendingFrames = new Map();
+  w.requestAnimationFrame = callback => {
+    pendingFrames.set(++frameId, callback);
+    return frameId;
+  };
+  w.cancelAnimationFrame = id => pendingFrames.delete(id);
+  const advanceFrames = () => {
+    const callbacks = [...pendingFrames.values()];
+    pendingFrames.clear();
+    for (const callback of callbacks) callback(now);
+  };
+  frameClocks.add(advanceFrames);
   Object.defineProperty(w.performance, 'now', { value: () => now });
   w.matchMedia = () => ({ matches: reduced });
   w.CSS = { highlights: new Map() };

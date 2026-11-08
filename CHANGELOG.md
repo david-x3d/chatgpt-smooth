@@ -2,6 +2,11 @@
 
 ChatGPT port changes, followed by the original Claude Smooth history.
 
+## [3.1.6] – 2026-11-08
+
+- Publish the first signed Firefox release with automatic updates.
+- Make animation regression tests independent of CI frame scheduling.
+
 ## [3.1.5] – 2026-11-08
 
 - First standalone ChatGPT Smooth release, adapted from Claude Smooth.

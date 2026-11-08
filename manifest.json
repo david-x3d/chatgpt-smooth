@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ChatGPT Smooth",
-  "version": "3.1.5",
+  "version": "3.1.6",
   "description": "Smoother animations on chatgpt.com, without changing the look.",
   "homepage_url": "https://github.com/david-x3d/chatgpt-smooth",
   "icons": {
