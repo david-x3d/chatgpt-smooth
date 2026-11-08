@@ -1,0 +1,11 @@
+{
+  "name": "chatgpt-smooth",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0"
+  }
+}

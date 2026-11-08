@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Claude Smooth – permanent install for Chromium browsers on Linux.
+# ChatGPT Smooth – permanent install for Chromium browsers on Linux.
 #
 # Chrome and its relatives only install extensions from outside the Chrome Web
 # Store when a browser policy allows it. This script writes that policy for every
@@ -14,9 +14,9 @@
 
 set -euo pipefail
 
-ID="apcfbbbgjehepnkgalebhbmomegdndno"
-UPDATE_URL="https://github.com/david-x3d/claude-smooth/releases/latest/download/updates.xml"
-FILE="claude-smooth.json"
+ID="ocdgocfofagpipocdoifokhndhlbpppa"
+UPDATE_URL="https://github.com/david-x3d/chatgpt-smooth/releases/latest/download/updates.xml"
+FILE="chatgpt-smooth.json"
 
 # browser name | executables to look for | policy folder
 BROWSERS=(
@@ -89,6 +89,6 @@ if [[ $any -eq 0 ]]; then
 fi
 
 echo
-echo "Done. Restart the browser – Claude Smooth gets installed automatically"
+echo "Done. Restart the browser – ChatGPT Smooth gets installed automatically"
 echo "and keeps itself up to date from the GitHub releases."
 echo "Check: chrome://policy (reload policies) and chrome://extensions"

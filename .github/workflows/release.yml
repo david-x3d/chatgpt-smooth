@@ -46,6 +46,18 @@ jobs:
             exit 1
           fi
 
+      - name: Check signing credentials
+        run: |
+          if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ] || [ -z "$CRX_PRIVATE_KEY" ]; then
+            echo "::error::Configure AMO_JWT_ISSUER, AMO_JWT_SECRET and CRX_PRIVATE_KEY before releasing."
+            exit 1
+          fi
+
+      - name: Tests
+        run: |
+          npm ci
+          npm test
+
       - name: Build
         run: node scripts/build.mjs
 
@@ -59,14 +71,14 @@ jobs:
             --source-dir dist/firefox --artifacts-dir dist/amo \
             --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET" \
             --approval-timeout 1800000
-          mv dist/amo/*.xpi "dist/claude-smooth-${{ steps.v.outputs.version }}-firefox.xpi"
+          mv dist/amo/*.xpi "dist/chatgpt-smooth-${{ steps.v.outputs.version }}-firefox.xpi"
 
       - name: Sign for Chromium (CRX3)
         if: env.CRX_PRIVATE_KEY != ''
         run: |
           key="$RUNNER_TEMP/crx-key.pem"
           (umask 077 && printf '%s\n' "$CRX_PRIVATE_KEY" > "$key")
-          npx --yes crx3@1 -p "$key" -o "dist/claude-smooth-${{ steps.v.outputs.version }}-chromium.crx" dist/chromium
+          npx --yes crx3@1 -p "$key" -o "dist/chatgpt-smooth-${{ steps.v.outputs.version }}-chromium.crx" dist/chromium
           rm -f "$key"
 
       - name: Update manifests
@@ -101,12 +113,12 @@ jobs:
 
           | File | For |
           |---|---|
-          | \`claude-smooth-$version-firefox.xpi\` | Firefox, Floorp, Zen, LibreWolf … (signed by Mozilla, installs permanently) |
-          | \`claude-smooth-$version-chromium.crx\` | Chrome, Edge, Brave, Vivaldi, Helium … (signed, used by the policy install) |
-          | \`claude-smooth-$version-chromium.zip\` | Chromium browsers in developer mode ("Load unpacked") |
-          | \`claude-smooth-$version-firefox.zip\` | Firefox, unsigned – only for \`about:debugging\` |
+          | \`chatgpt-smooth-$version-firefox.xpi\` | Firefox, Floorp, Zen, LibreWolf … (signed by Mozilla, installs permanently) |
+          | \`chatgpt-smooth-$version-chromium.crx\` | Chrome, Edge, Brave, Vivaldi, Helium … (signed, used by the policy install) |
+          | \`chatgpt-smooth-$version-chromium.zip\` | Chromium browsers in developer mode ("Load unpacked") |
+          | \`chatgpt-smooth-$version-firefox.zip\` | Firefox, unsigned – only for \`about:debugging\` |
           | \`updates.json\` / \`updates.xml\` | Automatic updates (fetched by the browsers themselves) |
           EOF
 
           gh release create "$tag" "${files[@]}" \
-            --title "Claude Smooth $tag" --notes-file "$notes" --target "$GITHUB_SHA"
+            --title "ChatGPT Smooth $tag" --notes-file "$notes" --target "$GITHUB_SHA"

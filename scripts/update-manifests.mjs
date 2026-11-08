@@ -21,7 +21,7 @@ const { version, homepage_url: repoUrl } = manifest;
 const geckoId = manifest.browser_specific_settings.gecko.id;
 const download = `${repoUrl}/releases/download/v${version}`;
 
-const xpi = `claude-smooth-${version}-firefox.xpi`;
+const xpi = `chatgpt-smooth-${version}-firefox.xpi`;
 if (existsSync(join(dist, xpi))) {
   const updates = {
     addons: { [geckoId]: { updates: [{ version, update_link: `${download}/${xpi}` }] } }
@@ -32,7 +32,7 @@ if (existsSync(join(dist, xpi))) {
   console.log("– no signed .xpi, skipping updates.json");
 }
 
-const crx = `claude-smooth-${version}-chromium.crx`;
+const crx = `chatgpt-smooth-${version}-chromium.crx`;
 if (existsSync(join(dist, crx))) {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <gupdate xmlns="http://www.google.com/update2/response" protocol="2.0">

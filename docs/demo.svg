@@ -1,10 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="800" height="360" role="img" aria-label="Animation: a message lifts off, the reply fades in line by line, the sidebar slides out and back in">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="800" height="360" role="img" aria-label="Animation: a message lifts off, the reply fades in line by line">
   <style>
     .sb, .ch, .pill, .bub, .ln { animation-duration: 8s; animation-iteration-count: infinite; animation-fill-mode: both;
       animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
-    .sb   { animation-name: sb; }
-    .ch   { animation-name: ch; }
-    .pill { animation-name: pill; }
+    .pill { display: none; }
     .bub  { animation-name: bub; transform-box: fill-box; transform-origin: 100% 100%; }
     .ln   { animation-name: ln; }
     .l2 { animation-delay: .22s } .l3 { animation-delay: .44s } .l4 { animation-delay: .66s } .l5 { animation-delay: .88s }
@@ -48,14 +46,14 @@
 
       <rect x="304" y="310" width="392" height="34" rx="14" fill="#30302e" stroke="#3d3c39"/>
       <rect x="322" y="323" width="110" height="8" rx="4" fill="#5d5c57"/>
-      <circle cx="676" cy="327" r="9" fill="#d97757"/>
+      <circle cx="676" cy="327" r="9" fill="#10a37f"/>
     </g>
 
     <!-- sidebar -->
     <g class="sb">
       <rect width="200" height="360" fill="#1f1e1d"/>
       <rect x="199.5" width="1" height="360" fill="#3a3936"/>
-      <rect x="20" y="22" width="64" height="12" rx="6" fill="#d97757"/>
+      <rect x="20" y="22" width="64" height="12" rx="6" fill="#10a37f"/>
       <g fill="#5d5c57">
         <rect x="20" y="62"  width="96" height="8" rx="4"/>
         <rect x="20" y="86"  width="80" height="8" rx="4"/>
@@ -78,7 +76,7 @@
     <g class="pill">
       <rect x="12" y="12" width="70" height="28" rx="9" fill="#30302e"/>
       <rect x="22" y="21" width="10" height="10" rx="2" fill="none" stroke="#8f8d86" stroke-width="1.6"/>
-      <rect x="40" y="22" width="32" height="8" rx="4" fill="#d97757"/>
+      <rect x="40" y="22" width="32" height="8" rx="4" fill="#10a37f"/>
     </g>
   </g>
 </svg>

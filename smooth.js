@@ -21,9 +21,9 @@
   // sampled into CSS linear() easings. Under-damped ones overshoot.
   // ----------------------------------------------------------------------
   const SPRINGS = {
-    smooth: { response: 0.5, damping: 1 },     // no bounce, long soft tail
+    smooth: { response: 0.42, damping: 1 },     // no bounce, long soft tail
     snappy: { response: 0.36, damping: 0.8 },  // quick, a hint of overshoot
-    bouncy: { response: 0.5, damping: 0.62 },  // playful settle
+    bouncy: { response: 0.42, damping: 0.78 },  // playful settle
     layout: { response: 0.34, damping: 1 },    // sidebar / panels: quick, no wobble
     send:   { response: 0.42, damping: 0.84 }, // sent message: lifts off, settles softly
     follow: { response: 0.3, damping: 1 }      // streaming: each new line glides up
@@ -144,7 +144,7 @@
   function animateFloatIn(el, quiet) {
     if (floats.has(el) || el.closest(".cs-out, .cs-out-fade") || isClosing(el)) return;
     const dialog = el.matches(DIALOG) ? el : el.querySelector(DIALOG);
-    const f = { kind: dialog ? "fade" : "pop", waiting: false, started: false, timer: 0 };
+    const f = { kind: dialog ? "fade" : "pop", waiting: false, started: false, timer: 0, positionObserver: null };
     floats.set(el, f);
     if (quiet) return; // re-render of a menu that was already open: no second bloom
     clearGhosts();     // a new menu replaces any old one still fading out
@@ -156,6 +156,12 @@
       // on its first positioned frame, so none of it plays where nobody sees it
       // and it grows out of the right side of its button.
       f.waiting = true;
+      // Observe positioning only on this unplaced popup. Watching every inline
+      // style on the page also observes the sidebar's per-frame width updates.
+      f.positionObserver = new MutationObserver(() => {
+        if (!unplaced(el)) startPop(el);
+      });
+      f.positionObserver.observe(el, { attributes: true, attributeFilter: ["style"] });
       f.timer = setTimeout(() => startPop(el), 120);
     } else {
       startPop(el);
@@ -173,6 +179,7 @@
     f.started = true;
     f.waiting = false;
     clearTimeout(f.timer);
+    f.positionObserver?.disconnect();
     if (!el.isConnected) return;
     const content = el.matches("[data-side]") ? el : el.querySelector("[data-side]");
     const side = content ? content.getAttribute("data-side") : "bottom";
@@ -213,12 +220,20 @@
     host.classList.toggle("cs-recede", open && !reducedMotion.matches);
   }
 
+  function forgetFloat(el) {
+    const f = floats.get(el);
+    if (f) {
+      clearTimeout(f.timer);
+      f.positionObserver?.disconnect();
+      floats.delete(el);
+    }
+    return f;
+  }
+
   // React has already removed the portal; put a lifeless copy back in the same
   // spot (its inline styles still position it) and let it fade out.
   function animateFloatOut(el, next) {
-    const f = floats.get(el);
-    floats.delete(el);
-    if (f) clearTimeout(f.timer);
+    const f = forgetFloat(el);
     if (!f || (f.kind === "pop" && !f.started) || isClosing(el)) return;
     if (el.matches('[role="tooltip"]') || el.querySelector('[role="tooltip"]')) return;
     clearGhosts();
@@ -241,6 +256,7 @@
   const isGhost = (n) => n.classList.contains("cs-out") || n.classList.contains("cs-out-fade");
 
   function handleFloats(mutations) {
+    const hadFloats = floats.size > 0;
     // First pass: did a menu disappear and another appear in the same batch?
     // Then it's a re-render, not close + open.
     let removedFloat = false, addedFloat = false;
@@ -257,17 +273,12 @@
 
     for (const m of mutations) {
       if (m.type === "attributes") {
-        if (m.attributeName === "style") {
-          const f = floats.get(m.target);
-          if (f && f.waiting && !unplaced(m.target)) startPop(m.target);
-          continue;
-        }
         if (m.attributeName !== "data-state" && m.attributeName !== "hidden") continue;
         const el = m.target;
         if (el.nodeType !== 1 || !el.matches(FLOAT)) continue;
         const r = floatRoot(el);
         const state = el.getAttribute("data-state");
-        if (state === "closed" || el.hidden) floats.delete(r); // claude.ai animates this close itself
+        if (state === "closed" || el.hidden) forgetFloat(r); // ChatGPT animates this close itself
         else if (state === "open" && !floats.has(r)) animateFloatIn(r);
         continue;
       }
@@ -276,7 +287,7 @@
         if (n.nodeType !== 1 || n.isConnected || isGhost(n)) continue;
         if (floats.has(n)) {
           if (!rerender && m.target === document.body) animateFloatOut(n, m.nextSibling);
-          else floats.delete(n);
+          else forgetFloat(n);
         }
       }
       for (const n of m.addedNodes) {
@@ -284,17 +295,21 @@
         for (const f of findFloats(n)) animateFloatIn(f, rerender);
       }
     }
-    for (const el of floats.keys()) if (!el.isConnected) floats.delete(el);
-    updateRecede();
+    for (const el of floats.keys()) if (!el.isConnected) forgetFloat(el);
+    if (hadFloats || floats.size) updateRecede();
   }
 
   // ======================================================================
   // Layout glide (FLIP): sidebar collapse, panels opening — only where
-  // claude.ai doesn't already animate the change itself.
+  // ChatGPT doesn't already animate the change itself.
   // ======================================================================
-  const LANDMARKS = 'nav, aside, main, [role="navigation"], [role="complementary"], main > *';
-  // claude.ai's current sidebar has its own handling further down
-  const OWN_SIDEBAR = '.dframe-sidebar, [data-activity-peek-zone]';
+  const LANDMARKS = 'nav, aside, main, [role="navigation"], [role="complementary"], ' +
+    '#stage-slideover-sidebar, #stage-sidebar, #app-shell-sidebar, main > *';
+  const SIDEBAR = '#app-shell-sidebar, .app-shell-left-panel, [data-app-shell-left-panel-appearance], ' +
+    '#stage-slideover-sidebar, #stage-sidebar, #stage-sidebar-small-screen, [data-sidebar-navigation-root]';
+  const SIDE_TOGGLE = '[data-app-shell-sidebar-trigger], button[aria-controls="app-shell-sidebar"], ' +
+    'button[aria-controls="browser-sidebar-popover"], [data-testid*="sidebar"], ' +
+    'button[aria-label*="sidebar" i], button[aria-label*="seitenleiste" i]';
   const LAYOUT_PROPS = /width|left|right|margin|padding|transform|translate|grid|inset|flex|clearance/;
   const snap = new Map(); // element -> rect
   let snapUntil = 0;
@@ -304,7 +319,7 @@
     snap.clear();
     const els = document.querySelectorAll(LANDMARKS);
     for (let i = 0; i < els.length && i < 40; i++) {
-      if (animating(els[i]) || els[i].closest(OWN_SIDEBAR)) continue; // mid-glide rects include our own offset
+      if (els[i].closest(SIDEBAR) || animating(els[i])) continue; // mid-glide rects include our own offset
       const r = els[i].getBoundingClientRect();
       if (r.width) snap.set(els[i], r);
     }
@@ -324,167 +339,67 @@
 
   function flip() {
     flipQueued = false;
-    if (!settings.layout || performance.now() > snapUntil) return;
+    if (!settings.layout || reducedMotion.matches || performance.now() > snapUntil) {
+      snap.clear();
+      return;
+    }
+    // Consume each snapshot once. Re-snapshotting after our own mutations can
+    // keep measuring and restarting layout work throughout a native animation.
+    snapUntil = 0;
+    if (layoutAlreadyAnimating()) { snap.clear(); return; }
     const moved = [];
     for (const [el, old] of snap) {
       if (!el.isConnected) continue;
       const now = el.getBoundingClientRect();
       const dx = old.left - now.left;
-      const dw = old.width - now.width;
-      if ((Math.abs(dx) > 6 || Math.abs(dw) > 6) && now.width && !animating(el)) {
-        moved.push({ el, old, now, dx, dw });
+      if (Math.abs(dx) > 6 && now.width && !animating(el)) {
+        moved.push({ el, dx });
       }
     }
-    if (moved.length && !layoutAlreadyAnimating()) {
+    if (moved.length) {
       moved.sort((a, b) => depth(a.el) - depth(b.el)); // outermost first
       const done = [];
       for (const mv of moved) {
         if (done.some((p) => p.contains(mv.el))) continue;
         done.push(mv.el);
-        const frames = [{}, {}];
-        if (Math.abs(mv.dw) > 6) {
-          frames[0].width = mv.old.width + "px";
-          frames[1].width = mv.now.width + "px";
-        }
-        if (Math.abs(mv.dx) > 6) {
-          frames[0].translate = `${mv.dx}px 0`;
-          frames[1].translate = "0 0";
-        }
+        // Never animate width: it reflows the conversation on every frame.
+        const frames = [{ translate: `${mv.dx}px 0` }, { translate: "0 0" }];
         const sp = springs.layout || { ms: 450, easing: EASE };
         const a = mv.el.animate(frames, { duration: sp.ms, easing: sp.easing });
         a.id = "cs-flip";
       }
     }
-    takeSnapshot(); // keep watching: some apps change layout in several steps
-    snapUntil = performance.now() + 400;
+    snap.clear();
   }
 
   function depth(el) { let d = 0; while ((el = el.parentElement)) d++; return d; }
 
   function onUserAction(e) {
     if (!settings.layout || reducedMotion.matches) return;
+    // Let native sidebar motion run alone, including its keyboard shortcut.
+    const sidebarKey = e.type === "keydown" && (e.ctrlKey || e.metaKey) &&
+      (e.key === "b" || e.key === "B" || e.key === "s" || e.key === "S");
+    if (sidebarKey || e.target.closest?.(SIDE_TOGGLE)) {
+      snap.clear();
+      snapUntil = 0;
+      return;
+    }
+    // Typing and pointer placement in the composer cannot change page layout.
+    if (e.target.closest?.('input, textarea, [contenteditable]') ||
+      (e.type === "keydown" && (e.repeat || !["Enter", " "].includes(e.key)))) return;
     takeSnapshot();
-    const toggle = e.type === "keydown"
-      ? (e.key === "b" || e.key === "B") && (e.ctrlKey || e.metaKey) && !e.altKey
-      : e.target.closest && e.target.closest(SIDE_TOGGLE);
-    if (toggle) sidePrepare();
+    // Schedule directly from the action; no page-wide class/style observation
+    // is needed to detect the resulting layout on the next frame.
+    if (!flipQueued) {
+      flipQueued = true;
+      requestAnimationFrame(flip);
+    }
   }
   addEventListener("pointerdown", onUserAction, true);
   addEventListener("keydown", onUserAction, true);
 
-  // ======================================================================
-  // claude.ai's sidebar: collapsing turns the whole sidebar into a small
-  // button in a single frame and the page jumps over. Instead, a copy of the
-  // open sidebar slides out while the page glides after it (its offset,
-  // --df-sidebar-clearance, transitions in smooth.css); opening slides the
-  // real sidebar in. The page title, which makes room for the button, glides too.
-  // ======================================================================
-  const SIDE_TOGGLE = 'button[aria-keyshortcuts$="+b" i], button[aria-label*="seitenleiste" i], ' +
-    'button[aria-label*="sidebar" i]';
-  const side = { ghost: null, bar: null, w: 0, at: -1e9, title: null, titleLeft: 0, peekAt: -1e9 };
-
-  const frameRoot = () => document.querySelector(".dframe-root");
-  const isRtl = (el) => getComputedStyle(el).direction === "rtl";
-
-  // Runs on pointerdown / Ctrl+B, i.e. while the sidebar still looks open.
-  function sidePrepare() {
-    const frame = frameRoot();
-    side.ghost = null;
-    side.at = performance.now();
-    if (!frame || frame.hasAttribute("data-phone-sheet")) return;
-    // title, its menu arrow and icons move as one row
-    const title = frame.querySelector('.dframe-header [data-testid="session-title-split"]') ||
-      frame.querySelector(".dframe-header h2");
-    side.title = title;
-    side.titleLeft = title ? title.getBoundingClientRect().left : 0;
-    if (frame.hasAttribute("data-collapsed")) return;
-    const bar = frame.querySelector(".dframe-sidebar");
-    if (!bar) return;
-    // the sidebar is positioned against its containing block, not the frame
-    const fr = (bar.offsetParent || frame).getBoundingClientRect();
-    const b = bar.getBoundingClientRect();
-    // rebuild the open-sidebar context around a copy: frame > ... > sidebar
-    const wrap = frame.cloneNode(false);
-    for (const a of ["id", "data-collapsed", "data-hovering", "data-peeked", "data-resizing"]) wrap.removeAttribute(a);
-    let host = wrap;
-    const chain = [];
-    for (let p = bar.parentElement; p && p !== frame; p = p.parentElement) chain.unshift(p);
-    for (const p of chain) {
-      const c = p.cloneNode(false);
-      c.removeAttribute("id");
-      host.appendChild(c);
-      host = c;
-    }
-    const copy = bar.cloneNode(true);
-    copy.removeAttribute("id");
-    for (const n of copy.querySelectorAll("[id]")) n.removeAttribute("id");
-    host.appendChild(copy);
-    wrap.classList.add("cs-side-ghost");
-    wrap.setAttribute("aria-hidden", "true");
-    wrap.inert = true;
-    Object.assign(wrap.style, {
-      position: "fixed", left: fr.left + "px", top: fr.top + "px", width: fr.width + "px",
-      height: fr.height + "px", margin: "0", pointerEvents: "none", zIndex: "2147483600",
-      overflow: "hidden", background: "none"
-    });
-    side.ghost = wrap;
-    side.bar = copy;
-    side.w = isRtl(frame) ? -(fr.right - b.left) : b.right - fr.left;
-  }
-
-  function sideCollapse(frame) {
-    const wrap = side.ghost;
-    side.ghost = null;
-    if (!wrap || performance.now() - side.at > 1500) return;
-    root.appendChild(wrap); // outside <body>: invisible to claude.ai and to our observers
-    const sp = springs.layout || { ms: 450, easing: EASE };
-    const a = side.bar.animate([{ translate: "0 0" }, { translate: `${-side.w}px 0` }],
-      { duration: sp.ms, easing: sp.easing, fill: "forwards" });
-    const done = () => wrap.remove();
-    a.onfinish = a.oncancel = done;
-    setTimeout(done, sp.ms + 300);
-  }
-
-  function sideExpand(frame) {
-    // opened from the hover peek: it is already on screen, nothing to slide
-    if (frame.hasAttribute("data-hovering") || performance.now() - side.peekAt < 400) return;
-    const bar = frame.querySelector(".dframe-sidebar");
-    if (!bar) return;
-    const fr = frame.getBoundingClientRect();
-    const b = bar.getBoundingClientRect();
-    const w = isRtl(frame) ? -(fr.right - b.left) : b.right - fr.left;
-    const sp = springs.layout || { ms: 450, easing: EASE };
-    const a = bar.animate([{ translate: `${-w}px 0` }, { translate: "0 0" }],
-      { duration: sp.ms, easing: sp.easing });
-    a.id = "cs-flip";
-  }
-
-  function sideTitle() {
-    const t = side.title;
-    if (!t || !t.isConnected || performance.now() - side.at > 1500) return;
-    const dx = side.titleLeft - t.getBoundingClientRect().left;
-    side.title = null;
-    if (Math.abs(dx) < 2 || Math.abs(dx) > 200) return;
-    const sp = springs.layout || { ms: 450, easing: EASE };
-    const a = t.animate([{ translate: `${dx}px 0` }, { translate: "0 0" }],
-      { duration: sp.ms, easing: sp.easing, composite: "add" });
-    a.id = "cs-flip";
-  }
-
-  function handleSidebar(mutations) {
-    let changed = null;
-    for (const m of mutations) {
-      if (m.type !== "attributes") continue;
-      const t = m.target;
-      if (m.attributeName === "data-hovering") side.peekAt = performance.now();
-      else if (m.attributeName === "data-collapsed" && t.classList && t.classList.contains("dframe-root") &&
-        (m.oldValue !== null) !== t.hasAttribute("data-collapsed")) changed = t;
-    }
-    if (!changed || changed.hasAttribute("data-phone-sheet") || changed.hasAttribute("data-resizing")) return;
-    if (changed.hasAttribute("data-collapsed")) sideCollapse(changed);
-    else sideExpand(changed);
-    sideTitle();
-  }
+  // ChatGPT already animates its sidebar on current layouts. The generic FLIP
+  // above fills in abrupt layout changes without replaying native transitions.
 
   // ======================================================================
   // Every click: press squish with spring release, pointer sheen,
@@ -498,7 +413,8 @@
 
   function clickable(node) {
     const el = node && node.closest ? node.closest(CLICKABLE) : null;
-    if (!el || el.matches(':disabled, [aria-disabled="true"]') || el.closest(TYPING)) return null;
+    if (!el || el.matches(':disabled, [aria-disabled="true"]') || el.closest(TYPING) ||
+      el.closest(SIDE_TOGGLE)) return null;
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height || r.width * r.height > innerWidth * innerHeight * 0.2) return null;
     if (getComputedStyle(el).display === "inline") return null; // links inside text
@@ -560,7 +476,7 @@
     sheen.spot = document.createElement("div");
     sheen.spot.className = "cs-sheen-spot";
     sheen.box.appendChild(sheen.spot);
-    root.appendChild(sheen.box); // outside <body>: invisible to claude.ai and to our observers
+    root.appendChild(sheen.box); // outside <body>: invisible to ChatGPT and to our observers
   }
 
   function sheenShow(el, r) {
@@ -707,9 +623,15 @@
     if (location.pathname === lastPath) return;
     const from = lastPath;
     lastPath = location.pathname;
-    // sending the first message turns /new into /chat/<id>: that's not a page
-    // change, the message and its answer must animate like any other
-    if (/^\/(new)?$/.test(from) && location.pathname.startsWith("/chat/")) return;
+    // The first send creates /c/<id> (or /g/<gpt>/c/<id> for a custom GPT).
+    // Only a recent send may bypass navigation quieting: opening history from
+    // the home page must not replay an existing answer.
+    const firstChat = from === "/" ? /^\/c\/[^/]+$/.test(lastPath)
+      : /^\/g\/[^/]+$/.test(from) && lastPath.startsWith(from + "/c/");
+    if (firstChat && performance.now() - sentAt < 6000) {
+      quietUntil = 0;
+      return;
+    }
     quietUntil = performance.now() + QUIET_MS;
     resetStream();
     pageUntil = settings.pages ? performance.now() + 1500 : 0;
@@ -731,14 +653,17 @@
   }
 
   // ======================================================================
-  // New messages: yours lifts off from the message box, Claude's rises in
+  // New messages: yours lifts off from the message box, ChatGPT's rises in
   // ======================================================================
-  const USER_MSG = '[data-testid="user-message"]';
-  const LIVE = '[data-is-streaming="true"]';
-  const RESPONSE = ".font-claude-response, .font-claude-message";
-  const COMPOSER = '.ProseMirror, [contenteditable="true"], textarea';
-  const SEND_BTN = 'button[type="submit"], button[aria-label*="send" i], button[aria-label*="senden" i]';
+  const USER_MSG = '[data-message-author-role="user"]';
+  const RESPONSE = '[data-message-author-role="assistant"]';
+  const LIVE = '[data-message-author-role="assistant"] .result-streaming, ' +
+    '[data-message-author-role="assistant"][data-is-streaming="true"], ' +
+    '[data-message-author-role="assistant"][aria-busy="true"]';
+  const COMPOSER = '#prompt-textarea, .ProseMirror, [contenteditable="true"], textarea';
+  const SEND_BTN = '[data-testid="send-button"], button[type="submit"], button[aria-label*="send" i], button[aria-label*="senden" i]';
   let sentAt = -1e9;
+  const enteredMessages = new WeakSet();
 
   addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing && e.target.closest && e.target.closest(COMPOSER)) {
@@ -761,13 +686,19 @@
       if (el.closest(".cs-msg, .cs-turn, .cs-page")) continue;
       const msg = sent && (el.matches(USER_MSG) ? el : el.querySelector(USER_MSG));
       if (msg && msg === lastOf(USER_MSG) && el.querySelectorAll(USER_MSG).length <= 1) {
+        if (enteredMessages.has(msg)) continue;
+        enteredMessages.add(msg);
         sendIn(el, msg);
         continue;
       }
       if (el.querySelector(USER_MSG)) continue;
       const live = el.matches(LIVE) ? el : el.querySelector(LIVE);
       const resp = el.matches(RESPONSE) ? el : el.querySelector(RESPONSE);
-      if (live || (sent && resp && resp === lastOf(RESPONSE))) once(el, "cs-turn");
+      const answer = resp || (live && live.closest(RESPONSE));
+      if (answer && answer === lastOf(RESPONSE) && (live || sent) && !enteredMessages.has(answer)) {
+        enteredMessages.add(answer);
+        once(el, "cs-turn");
+      }
     }
   }
 
@@ -782,7 +713,7 @@
 
   // ======================================================================
   // Text streaming: new words fade in one after another
-  // Uses the CSS Custom Highlight API, so claude.ai's DOM is never touched.
+  // Uses the CSS Custom Highlight API, so ChatGPT's DOM is never touched.
   // ======================================================================
   const hasHighlights = typeof Highlight === "function" && CSS.highlights;
   const BUCKETS = 24;                  // fade steps (0 = not revealed yet)
@@ -819,11 +750,11 @@
       const alpha = Math.round(e * 100);
       let shadow = "none";
       if (b > 0 && settings.blur) {
-        const blur = ((1 - e) * 7).toFixed(2);
+        const blur = ((1 - e) * 4).toFixed(2);
         const ghost = Math.round((1 - e) * 85);
         const glow = Math.round(Math.pow(1 - p, 2) * 38);
         shadow = `0 0 ${blur}px color-mix(in srgb, ${color} ${ghost}%, transparent), ` +
-          `0 0 ${(4 + (1 - e) * 10).toFixed(1)}px color-mix(in srgb, #d97757 ${glow}%, transparent)`;
+          `0 0 ${(4 + (1 - e) * 10).toFixed(1)}px color-mix(in srgb, #10a37f ${glow}%, transparent)`;
       }
       css += `::highlight(cs-t${i}-${b}){color:color-mix(in srgb, ${color} ${alpha}%, transparent);text-shadow:${shadow}}\n`;
     }
@@ -851,7 +782,7 @@
     clearHighlights();
   }
 
-  // claude.ai may swap the streaming element for its final version when the
+  // ChatGPT may swap the streaming element for its final version when the
   // answer is done: remember what was on screen so it doesn't fade in again
   function loseStream(el) {
     stream.lostText = el.textContent;
@@ -895,7 +826,7 @@
     const backlog = stream.nextStart - now;
     if (backlog <= 0) stream.nextStart = now;
     else if (backlog > 700 * k()) stream.nextStart = now + 300 * k(); // never fall far behind
-    const step = (backlog > 300 * k() ? 8 : 24) * k();
+    const step = (backlog > 300 * k() ? 8 : 16) * k();
     const t = stream.nextStart;
     stream.nextStart += step;
     return t;
@@ -950,7 +881,7 @@
   function paint() {
     stream.frame = 0;
     const now = performance.now();
-    const fade = 600 * k();
+    const fade = 380 * k();
     clearHighlights();
     stream.segs = stream.segs.filter((s) => now - s.t < fade);
     for (const s of stream.segs) {
@@ -964,10 +895,11 @@
   function streamTarget(node) {
     const el = node.nodeType === 1 ? node : node.parentElement;
     if (!el) return null;
-    const live = el.closest(LIVE);
-    if (live) return live.querySelector(RESPONSE) || live;
-    const r = el.closest(RESPONSE);
-    return r && r === lastOf(RESPONSE) ? r : null;
+    const answer = el.closest(RESPONSE);
+    if (!answer || answer !== lastOf(RESPONSE)) return null;
+    // Animate answer text, excluding copy buttons, feedback and other controls.
+    const body = answer.querySelector(".markdown, .prose");
+    return body && body.contains(el) ? body : null;
   }
 
   function handleStreamText(mutations) {
@@ -1023,7 +955,7 @@
   }
 
   // ======================================================================
-  // While an answer streams in, claude.ai keeps the newest line in view by
+  // While an answer streams in, ChatGPT keeps the newest line in view by
   // jumping the scroll position a line at a time. Each jump becomes a glide:
   // the conversation is pushed back by the jump and springs up to rest.
   // ======================================================================
@@ -1112,11 +1044,12 @@
   // multiply and the content would show up late and then pop.
   // ======================================================================
   const NO_APPEAR = 'svg, .ProseMirror, [contenteditable]:not([contenteditable="false"]), ' +
-    '[data-is-streaming], [role="tooltip"], ' + RESPONSE + ', ' +
+    '[data-is-streaming], .result-streaming, [role="tooltip"], ' + USER_MSG + ', ' + RESPONSE + ', ' +
     '.cs-pop, .cs-fade, .cs-dialog, .cs-out, .cs-out-fade, .cs-item, ' +
     '.cs-msg, .cs-turn, .cs-page, .cs-in, .cs-in-soft';
   const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "LINK", "META", "TEMPLATE", "NOSCRIPT", "BR", "WBR"]);
-  const appearable = (n) => !SKIP_TAGS.has(n.tagName) && !n.inert && !n.closest(NO_APPEAR);
+  const appearable = (n) => !SKIP_TAGS.has(n.tagName) && !n.inert && !n.closest(NO_APPEAR) &&
+    !n.closest(SIDEBAR) && !n.matches(SIDE_TOGGLE) && !n.querySelector(SIDEBAR);
   const sig = (n) => n.tagName + "|" + (n.getAttribute("class") || "");
 
   function outermost(nodes) {
@@ -1158,8 +1091,11 @@
     checkRoute();
     if (reducedMotion.matches) return;
     if (settings.popups) handleFloats(mutations);
-    if (settings.layout) handleSidebar(mutations);
     if (settings.press) handleIcons(mutations);
+    if (mutations.some(m => m.type === "attributes" && m.attributeName === "data-app-shell-sidebar-open")) {
+      snap.clear();
+      snapUntil = 0;
+    }
     if (settings.layout && !flipQueued && performance.now() < snapUntil) {
       flipQueued = true;
       requestAnimationFrame(flip);
@@ -1195,8 +1131,8 @@
   function start() {
     observer.observe(document.body, {
       childList: true, subtree: true, characterData: true,
-      attributes: true, attributeOldValue: true,
-      attributeFilter: ["data-state", "hidden", "class", "style", "aria-expanded", "data-collapsed", "data-hovering"]
+      attributes: true,
+      attributeFilter: ["data-state", "hidden", "aria-expanded", "aria-busy", "data-is-streaming", "data-app-shell-sidebar-open"]
     });
   }
   if (document.body) start();

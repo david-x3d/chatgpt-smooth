@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Builds the extension for both browser families from the files in the repo root:
 //
-//   dist/firefox/   + dist/claude-smooth-<version>-firefox.zip    (Gecko: Firefox, Floorp, Zen, LibreWolf …)
-//   dist/chromium/  + dist/claude-smooth-<version>-chromium.zip   (Chrome, Edge, Brave, Vivaldi, Helium …)
+//   dist/firefox/   + dist/chatgpt-smooth-<version>-firefox.zip    (Gecko: Firefox, Floorp, Zen, LibreWolf …)
+//   dist/chromium/  + dist/chatgpt-smooth-<version>-chromium.zip   (Chrome, Edge, Brave, Vivaldi, Helium …)
 //
 // manifest.json in the root is the Firefox manifest (so the folder can be loaded
 // directly via about:debugging). The Chromium manifest is derived from it.
@@ -33,8 +33,7 @@ delete chromium.browser_specific_settings; // Gecko-only
 chromium.icons = PNG_ICONS;                // Chromium can't use SVG icons
 chromium.action.default_icon = PNG_ICONS;
 chromium.minimum_chrome_version = "117";   // linear() easing, @starting-style
-chromium.key = PUBLIC_KEY;                 // same extension ID everywhere
-// policy installs (install/chromium-linux.sh) update themselves from here
+chromium.key = PUBLIC_KEY; // independent identity from Claude Smooth
 chromium.update_url = `${repoUrl}/releases/latest/download/updates.xml`;
 
 rmSync(dist, { recursive: true, force: true });
@@ -45,7 +44,7 @@ for (const [target, manifest] of Object.entries({ firefox, chromium })) {
   for (const file of FILES) cpSync(join(root, file), join(dir, file), { recursive: true });
   writeFileSync(join(dir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 
-  const zip = join(dist, `claude-smooth-${version}-${target}.zip`);
+  const zip = join(dist, `chatgpt-smooth-${version}-${target}.zip`);
   execFileSync("zip", ["-qr9X", zip, "."], { cwd: dir });
   console.log(`✓ ${target.padEnd(8)} ${zip.slice(root.length + 1)}`);
 }

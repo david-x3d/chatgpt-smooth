@@ -20,6 +20,11 @@ jobs:
           for f in smooth.js popup.js scripts/*.mjs; do node --check "$f"; done
           bash -n install/chromium-linux.sh
 
+      - name: DOM regression tests
+        run: |
+          npm ci
+          npm test
+
       - name: Build
         run: node scripts/build.mjs
 
@@ -28,5 +33,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: claude-smooth-builds
+          name: chatgpt-smooth-builds
           path: dist/*.zip

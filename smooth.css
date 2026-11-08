@@ -1,12 +1,12 @@
 /*
- * Claude Smooth — Apple-style motion for claude.ai
+ * ChatGPT Smooth — spring motion for chatgpt.com
  *
  * Springs: smooth.js computes real damped-spring curves (SwiftUI-style
  * .smooth / .snappy / .bouncy) and writes them as CSS linear() easings into
  * --cs-spring-* with matching durations in --cs-d-*. The values below are
  * fallbacks until the script has run.
  *
- * Most rules use :where() (zero specificity) so claude.ai's own styling wins
+ * Most rules use :where() (zero specificity) so ChatGPT's own styling wins
  * where it exists. Animations use the individual `scale` / `translate` / `filter`
  * properties so they never clobber an element's own `transform`.
  */
@@ -30,52 +30,58 @@ html:not(.cs-blur) { --cs-b: 0; }
 
 @media (prefers-reduced-motion: no-preference) {
 
-  /* ── 0. Opacity changes glide; images focus in from a blur ──
-     (new content fading in is done by smooth.js on the outermost new element
-     only: a CSS fade on every element would multiply and make content pop late) */
-  :where(html.cs-appear) :where(body *):not(:where(
-      svg *, .ProseMirror *, [contenteditable] *, .font-claude-response *,
-      .font-claude-message *, [data-is-streaming] *,
-      .cs-out *, .cs-out-fade *, .cs-pop *, .cs-fade *, .cs-dialog *,
-      .dframe-sidebar-body
+  /* New-content fades are applied in JS. A page-wide opacity transition can
+     override the shell's timing and leave the sidebar trailing its frame. */
+  :where(html.cs-appear) :where(img, video, canvas):not(:where(
+      #app-shell-sidebar, #app-shell-sidebar *, .app-shell-left-panel, .app-shell-left-panel *,
+      [data-app-shell-left-panel-appearance], [data-app-shell-left-panel-appearance] *,
+      #stage-slideover-sidebar, #stage-slideover-sidebar *, #stage-sidebar, #stage-sidebar *,
+      #stage-sidebar-small-screen, #stage-sidebar-small-screen *,
+      [data-sidebar-navigation-root], [data-sidebar-navigation-root] *,
+      [data-app-shell-sidebar-trigger], [data-app-shell-sidebar-trigger] *,
+      [aria-controls="app-shell-sidebar"], [aria-controls="app-shell-sidebar"] *,
+      [aria-controls="browser-sidebar-popover"], [aria-controls="browser-sidebar-popover"] *
   )) {
-    transition-property: opacity;
-    transition-duration: calc(260ms * var(--cs-k));
-    transition-timing-function: var(--cs-ease);
-  }
-  :where(html.cs-appear) :where(img, video, canvas) {
     transition: opacity calc(400ms * var(--cs-k)) var(--cs-ease),
       filter calc(600ms * var(--cs-k)) var(--cs-ease),
       scale var(--cs-d-smooth) var(--cs-spring-smooth);
   }
   @starting-style {
-    :where(html.cs-appear) :where(body) :where(img, video, canvas) {
+    :where(html.cs-appear) :where(body) :where(img, video, canvas):not(:where(
+      #app-shell-sidebar, #app-shell-sidebar *, .app-shell-left-panel, .app-shell-left-panel *,
+      [data-app-shell-left-panel-appearance], [data-app-shell-left-panel-appearance] *,
+      #stage-slideover-sidebar, #stage-slideover-sidebar *, #stage-sidebar, #stage-sidebar *,
+      #stage-sidebar-small-screen, #stage-sidebar-small-screen *,
+      [data-sidebar-navigation-root], [data-sidebar-navigation-root] *,
+      [data-app-shell-sidebar-trigger], [data-app-shell-sidebar-trigger] *,
+      [aria-controls="app-shell-sidebar"], [aria-controls="app-shell-sidebar"] *,
+      [aria-controls="browser-sidebar-popover"], [aria-controls="browser-sidebar-popover"] *
+  )) {
       opacity: 0;
-      filter: blur(calc(var(--cs-b) * 14px));
+      filter: blur(calc(var(--cs-b) * 6px));
       scale: 1.03;
     }
   }
 
-  /* ── 1. Sidebar & panels glide (only where claude.ai has no transition of its own) ── */
-  :where(html.cs-layout) :where(nav, aside, [role="navigation"], [role="complementary"]) {
-    transition-property: width, min-width, max-width, flex-basis, translate, transform;
-    transition-duration: var(--cs-d-layout);
-    transition-timing-function: var(--cs-spring-layout);
-  }
-  /* claude.ai's sidebar: the page's offset glides instead of jumping (claude.ai
-     registers --df-sidebar-clearance as a <length>, so it can transition).
-     Never while the sidebar is being dragged wider or narrower. */
-  html.cs-layout .dframe-root:not([data-resizing]):not([data-experiment]):not([data-phone-sheet]) .dframe-content-inner {
-    transition: --df-sidebar-clearance var(--cs-d-layout) var(--cs-spring-layout);
-  }
-
+  /* Native sidebar transitions control their own timing. Adding width/flex
+     transitions here makes the chat reflow and can lag behind the native shell.
+     Abrupt layout changes use a one-shot translate animation in smooth.js. */
   /* ── 2. Controls: colours glide, presses squish and spring back ── */
   :where(html.cs-hover) :where(
     button, a, summary, select, input, textarea, label,
     [role="button"], [role="menuitem"], [role="menuitemradio"],
     [role="menuitemcheckbox"], [role="option"], [role="tab"],
     [role="switch"], [role="checkbox"], [data-state]
-  ) {
+  ):not(:where(
+      #app-shell-sidebar, #app-shell-sidebar *, .app-shell-left-panel, .app-shell-left-panel *,
+      [data-app-shell-left-panel-appearance], [data-app-shell-left-panel-appearance] *,
+      #stage-slideover-sidebar, #stage-slideover-sidebar *, #stage-sidebar, #stage-sidebar *,
+      #stage-sidebar-small-screen, #stage-sidebar-small-screen *,
+      [data-sidebar-navigation-root], [data-sidebar-navigation-root] *,
+      [data-app-shell-sidebar-trigger], [data-app-shell-sidebar-trigger] *,
+      [aria-controls="app-shell-sidebar"], [aria-controls="app-shell-sidebar"] *,
+      [aria-controls="browser-sidebar-popover"], [aria-controls="browser-sidebar-popover"] *
+  )) {
     transition:
       color calc(200ms * var(--cs-k)) var(--cs-ease),
       background-color calc(200ms * var(--cs-k)) var(--cs-ease),
@@ -91,7 +97,16 @@ html:not(.cs-blur) { --cs-b: 0; }
   /* (press squish + spring release is driven by smooth.js, sized per element) */
 
   /* Chevrons and icons that rotate or flip: overshoot a little */
-  :where(html.cs-hover) :where(button, [role="button"], [data-state], summary) :where(svg) {
+  :where(html.cs-hover) :where(button, [role="button"], [data-state], summary) :where(svg):not(:where(
+      #app-shell-sidebar, #app-shell-sidebar *, .app-shell-left-panel, .app-shell-left-panel *,
+      [data-app-shell-left-panel-appearance], [data-app-shell-left-panel-appearance] *,
+      #stage-slideover-sidebar, #stage-slideover-sidebar *, #stage-sidebar, #stage-sidebar *,
+      #stage-sidebar-small-screen, #stage-sidebar-small-screen *,
+      [data-sidebar-navigation-root], [data-sidebar-navigation-root] *,
+      [data-app-shell-sidebar-trigger], [data-app-shell-sidebar-trigger] *,
+      [aria-controls="app-shell-sidebar"], [aria-controls="app-shell-sidebar"] *,
+      [aria-controls="browser-sidebar-popover"], [aria-controls="browser-sidebar-popover"] *
+  )) {
     transition: transform var(--cs-d-bouncy) var(--cs-spring-bouncy),
       rotate var(--cs-d-bouncy) var(--cs-spring-bouncy),
       scale var(--cs-d-bouncy) var(--cs-spring-bouncy),
@@ -99,7 +114,16 @@ html:not(.cs-blur) { --cs-b: 0; }
   }
 
   /* Toggle switches: the knob springs across */
-  :where(html.cs-hover) :where([role="switch"]) :where(*) {
+  :where(html.cs-hover) :where([role="switch"]) :where(*):not(:where(
+      #app-shell-sidebar, #app-shell-sidebar *, .app-shell-left-panel, .app-shell-left-panel *,
+      [data-app-shell-left-panel-appearance], [data-app-shell-left-panel-appearance] *,
+      #stage-slideover-sidebar, #stage-slideover-sidebar *, #stage-sidebar, #stage-sidebar *,
+      #stage-sidebar-small-screen, #stage-sidebar-small-screen *,
+      [data-sidebar-navigation-root], [data-sidebar-navigation-root] *,
+      [data-app-shell-sidebar-trigger], [data-app-shell-sidebar-trigger] *,
+      [aria-controls="app-shell-sidebar"], [aria-controls="app-shell-sidebar"] *,
+      [aria-controls="browser-sidebar-popover"], [aria-controls="browser-sidebar-popover"] *
+  )) {
     transition: transform var(--cs-d-bouncy) var(--cs-spring-bouncy),
       translate var(--cs-d-bouncy) var(--cs-spring-bouncy),
       background-color calc(200ms * var(--cs-k)) var(--cs-ease);
@@ -112,7 +136,7 @@ html:not(.cs-blur) { --cs-b: 0; }
       cs-focus-in-soft calc(220ms * var(--cs-k)) var(--cs-ease) both !important;
     transform-origin: var(--radix-popper-transform-origin, top center);
   }
-  /* claude.ai's own open animation on the menu inside would play on top of ours */
+  /* ChatGPT's own open animation on the menu inside would play on top of ours */
   html.cs-popups .cs-pop > [data-state="open"] {
     animation: none !important;
   }
@@ -235,7 +259,7 @@ html:not(.cs-blur) { --cs-b: 0; }
 
 /* Opacity + focus (eased, never overshoot) */
 @keyframes cs-focus-in {
-  from { opacity: 0; filter: blur(calc(var(--cs-b) * 10px)); }
+  from { opacity: 0; filter: blur(calc(var(--cs-b) * 4px)); }
   to   { opacity: 1; filter: blur(0); }
 }
 @keyframes cs-focus-in-soft {
@@ -268,14 +292,6 @@ html:not(.cs-blur) { --cs-b: 0; }
 @keyframes cs-symbol-out {
   from { opacity: 1; scale: 1; filter: blur(0); }
   to   { opacity: 0; scale: 0.3; filter: blur(calc(var(--cs-b) * 4px)); }
-}
-
-/* Copy of the sidebar sliding out (lives outside <body>): a still picture,
-   none of its contents may animate on their own */
-.cs-side-ghost,
-.cs-side-ghost * {
-  animation: none !important;
-  transition: none !important;
 }
 
 /* ── Sheen & click pulse (layer lives outside <body>, positioned by smooth.js) ── */

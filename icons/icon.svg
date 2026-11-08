@@ -1,1 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#d97757"/><path d="M10 30c6-10 10-10 14 0s8 10 14 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <title>ChatGPT Smooth</title>
+  <defs>
+    <linearGradient id="tile" x1="16" y1="0" x2="112" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#24CBA3"/>
+      <stop offset="0.52" stop-color="#0A9F83"/>
+      <stop offset="1" stop-color="#086653"/>
+    </linearGradient>
+    <linearGradient id="bubble" x1="48" y1="29" x2="82" y2="97" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DCFFF2"/>
+    </linearGradient>
+    <linearGradient id="flow" x1="48" y1="46" x2="84" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0DA98A"/>
+      <stop offset="1" stop-color="#087A67"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="32" fill="url(#tile)"/>
+  <rect x="0.75" y="0.75" width="126.5" height="126.5" rx="31.25" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="1.5"/>
+  <path d="M44 30H84C95.05 30 104 38.95 104 50V69C104 80.05 95.05 89 84 89H57L31 103L35.5 87C28.58 83.86 24 76.93 24 69V50C24 38.95 32.95 30 44 30Z" fill="#004B40" fill-opacity="0.14" transform="translate(0 3)"/>
+  <path d="M44 28H84C95.05 28 104 36.95 104 48V67C104 78.05 95.05 87 84 87H57L31 101L35.5 85C28.58 81.86 24 74.93 24 67V48C24 36.95 32.95 28 44 28Z" fill="url(#bubble)"/>
+  <path d="M42 51C49 43 56 43 64 51C72 59 79 59 86 51M42 65C49 57 56 57 64 65C72 73 79 73 86 65" stroke="url(#flow)" stroke-width="6.5" stroke-linecap="round"/>
+</svg>

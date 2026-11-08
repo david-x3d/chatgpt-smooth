@@ -4,10 +4,7 @@
 import { createHash } from "node:crypto";
 
 export const PUBLIC_KEY =
-  "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtTkwbt0YH1GhB3YnWBY3qvg1otuL4TvSjv2YsrARWzCqJEmMBX+U8toL6EFNVMNQ" +
-  "NrFmPin5OhzjmO6YeaK9+dd/C9svFbn7MQGp8lg4eV+5XnArZVaiklduvkCZsyNWY0apWrPhZsjSfKKjNmS7jhaSzJoV00olPXSCL1WjRvyR" +
-  "y2u+HDx55PfO20UnkDzBqkVypRBoYxYtv5rArBRs0cvGcmPVJIcv/U5YYjFIjtNQ3I1I2m65BWVXiwvUP+WF3FTb71IQrzVYqE0MG+YvkDM4" +
-  "bh6rCiZt4VB+wBLlR9hb1j+B2oGdTbzkOTwlqDs5canFV+lTEP2NCJqrc+LtqQIDAQAB";
+  "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmrdlNklNhtMBs/OfyR6bFIR2Qdo0uKFxvNfctsUFLChwNCWRNTupOIvFGZVLNFjoCAgpxayDSFmeJ7IYOgrBpw0rOnJbK6dO+er5nmkzNcbgp/H1FZfUeTavRgyrGypqVnGF9i+SbNNmeimcrhSlIiCxAf6QMLEy/Zyi6WiNrWuiplOOZ5rhKpT79j/uvobF2LEoJdecLaHb1Uw/rrGOzrmxTi/plKDMszPrhkNdN0pEC/FyC2GslcRavqvUr912MdKDHZtmN/YTEskJgyYwT8KTga1HucDgbPUSClXSZaHJleCfUN6JtxpQxMg5J0teCeYT9qcxfDvf7MPrzBvUcQIDAQAB";
 
 // Chromium extension ID: first 32 hex digits of SHA-256(public key), written with a–p
 export const ID = createHash("sha256")
